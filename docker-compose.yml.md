@@ -13,7 +13,7 @@ services:
     # This creates a container that serves index.html, script.js, style.css
     build:
       context: ./Public
-      dockerfile: dockerfile
+      dockerfile: website.dockerfile
     # Map host port 8080 to container port 80 (Nginx default)
     # Access the frontend at http://localhost:8080
     ports:
@@ -23,7 +23,7 @@ services:
       - business-network
     # Add health check to ensure Nginx is running
     healthcheck:
-      test: ["CMD", "nginx", "-t"]
+      test: [ "CMD", "nginx", "-t" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -61,7 +61,7 @@ services:
       - business-network
     # Health check to verify the API is responding
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -88,7 +88,7 @@ services:
       # DB_* variables are used by the Node.js scripts in scripts/ directory
       # These scripts (init-db.js, seed-db.js, db-utils.js) run inside the container
       # to set up the database schema and populate sample data
-      - DB_HOST=localhost  # Scripts connect to localhost within the db container
+      - DB_HOST=localhost # Scripts connect to localhost within the db container
       - DB_USER=myuser
       - DB_PASSWORD=mypassword
       - DB_NAME=businessform_db
@@ -98,7 +98,7 @@ services:
       - business-network
     # Health check to ensure PostgreSQL is ready to accept connections
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U myuser -d businessform_db"]
+      test: [ "CMD-SHELL", "pg_isready -U myuser -d businessform_db" ]
       interval: 30s
       timeout: 10s
       retries: 3

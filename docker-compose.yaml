@@ -4,15 +4,15 @@ services:
     build:
       context: ./Public
       dockerfile: website.dockerfile
-    ports: 
-      - 80:8080
+    ports:
+      - "8080:80"
     networks:
       - business-network
   api:
-    build: 
+    build:
       context: .
       dockerfile: api.Dockerfile
-    ports: 
+    ports:
       - "3000:3000"
     environment:
       - DB_HOST=db
@@ -21,6 +21,33 @@ services:
       - DB_NAME=businessform_db
       - DB_PORT=5432
     depends_on:
-      -db 
+      - db
     networks:
-    - business-network
+      - business-network
+
+  db:
+    build:
+      context: .
+      dockerfile: db.Dockerfile
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=businessform_db
+      - DB_HOST=localhost # Scripts connect to localhost within the db container
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+      - DB_NAME=businessform_db
+      - DB_PORT=5432
+    networks:
+      - business-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+networks:
+  business-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
