@@ -14,32 +14,32 @@ function animateCursor() {
     // Smooth follow effect
     cursorX += (mouseX - cursorX) * 0.15;
     cursorY += (mouseY - cursorY) * 0.15;
-    
+
     cursorFollowLight.style.transform = `translate(calc(${cursorX}px - 50%), calc(${cursorY}px - 50%))`;
-    
+
     requestAnimationFrame(animateCursor);
 }
 
 animateCursor();
 
 // ===== FORM SUBMISSION =====
-document.getElementById('intakeForm').addEventListener('submit', async function(e) {
+document.getElementById('intakeForm').addEventListener('submit', async function (e) {
     e.preventDefault();
-    
+
     // 1. Gather Data from the form
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
 
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalBtnText = submitBtn.innerHTML;
-    
+
     // 2. Set Loading State
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Submitting...';
 
     // 3. Send Data to Backend
     try {
-        const response = await fetch('http://localhost:3000/api/submit', {
+        const response = await fetch('/api/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -51,13 +51,13 @@ document.getElementById('intakeForm').addEventListener('submit', async function(
             // Show Success
             const responseArea = document.getElementById('responseArea');
             const jsonDisplay = document.getElementById('jsonPayload');
-            
+
             responseArea.classList.remove('hidden');
             jsonDisplay.textContent = JSON.stringify(data, null, 2);
-            
+
             // Clear form
             e.target.reset();
-            
+
             // Scroll to success message
             setTimeout(() => {
                 responseArea.scrollIntoView({ behavior: 'smooth' });
@@ -68,7 +68,7 @@ document.getElementById('intakeForm').addEventListener('submit', async function(
 
     } catch (error) {
         console.error('Error:', error);
-        showNotification('Could not connect to server. Please ensure it is running on http://localhost:3000', 'error');
+        showNotification('Could not connect to server. Please ensure the API is running.', 'error');
     } finally {
         // Reset Button
         submitBtn.disabled = false;
@@ -80,7 +80,7 @@ document.getElementById('intakeForm').addEventListener('submit', async function(
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `fixed top-4 right-4 p-4 rounded-lg backdrop-blur-xl border z-50 animate-pulse`;
-    
+
     if (type === 'error') {
         notification.style.cssText = `
             background: rgba(239, 68, 68, 0.1);
@@ -96,9 +96,9 @@ function showNotification(message, type = 'info') {
         `;
         notification.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${message}`;
     }
-    
+
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
         notification.remove();
     }, 5000);
@@ -107,11 +107,11 @@ function showNotification(message, type = 'info') {
 // ===== INPUT ANIMATIONS =====
 const inputs = document.querySelectorAll('.form-input');
 inputs.forEach(input => {
-    input.addEventListener('focus', function() {
+    input.addEventListener('focus', function () {
         this.parentElement.style.transform = 'scale(1.01)';
     });
-    
-    input.addEventListener('blur', function() {
+
+    input.addEventListener('blur', function () {
         this.parentElement.style.transform = 'scale(1)';
     });
 });

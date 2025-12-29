@@ -16,10 +16,8 @@ FROM postgres:14-alpine
 # both the API and DB services, and run the initialization script from the API
 # container once the DB container is healthy.
 
-# Install Node.js and npm.
-# We use the package manager for the Alpine Linux distribution, which is 'apk'.
-# '--no-cache' is a good practice to keep the image size small.
-RUN apk add --no-cache nodejs npm
+# Install Node.js, npm, and dos2unix to fix line endings
+RUN apk add --no-cache nodejs npm dos2unix
 
 # Set a working directory for our app's scripts.
 WORKDIR /app
@@ -38,8 +36,9 @@ RUN npm install
 # Node.js initialization script.
 COPY entrypoint.sh /usr/local/bin/
 
-# Make the entrypoint script executable.
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# Fix line endings (CRLF -> LF) and make executable
+RUN dos2unix /usr/local/bin/entrypoint.sh && \
+    chmod +x /usr/local/bin/entrypoint.sh
 
 # Set our custom script as the entrypoint for the container.
 # This overrides the default entrypoint of the postgres image.
