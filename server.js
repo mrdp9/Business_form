@@ -4,18 +4,28 @@ const cors = require('cors');
 const helmet = require('helmet');
 const { Pool } = require('pg');
 const validator = require('validator');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 // ===== MIDDLEWARE =====
 app.use(helmet());
+const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:8080'];
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || ['http://localhost:3000', 'http://localhost'],
+    origin: function(origin, callback) {
+        // allow requests with no origin (like mobile apps, curl, etc.)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'Public')));
 
 // ===== DATABASE CONNECTION =====
 const pool = new Pool({

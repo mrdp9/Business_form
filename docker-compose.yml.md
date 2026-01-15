@@ -1,0 +1,123 @@
+version: '3.8'
+
+# This docker-compose.yml orchestrates the entire Business Form application stack.
+# It defines three services: web (frontend), api (backend), and db (database).
+# Each service corresponds to a Dockerfile in the project.
+
+services:
+
+  # Web service: Serves the static HTML frontend using Nginx
+  # This corresponds to the Public/ directory and Public/dockerfile
+  web:
+    # Build the image from the Public directory using its dockerfile
+    # This creates a container that serves index.html, script.js, style.css
+    build:
+      context: ./Public
+      dockerfile: website.dockerfile
+    # Map host port 8080 to container port 80 (Nginx default)
+    # Access the frontend at http://localhost:8080
+    ports:
+      - "8080:80"
+    # Connect to the shared network so it can communicate with other services
+    networks:
+      - business-network
+    # Add health check to ensure Nginx is running
+    healthcheck:
+      test: [ "CMD", "nginx", "-t" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # API service: Runs the Node.js Express server (server.js)
+  # This corresponds to the root directory and api.Dockerfile
+  api:
+    # Build the image from the root directory using api.Dockerfile
+    # This creates a container running the Express API on port 3000
+    build:
+      context: .
+      dockerfile: api.Dockerfile
+    # Map host port 3000 to container port 3000
+    # The API will be accessible at http://localhost:3000
+    ports:
+      - "3000:3000"
+    # Environment variables needed by server.js to connect to PostgreSQL
+    # These match the database credentials and are used in scripts/db-utils.js
+    environment:
+      # DB_HOST=db tells the API to connect to the 'db' service (not localhost)
+      # This is the key to service discovery in Docker Compose networks
+      - DB_HOST=db
+      # Database credentials - must match the db service's POSTGRES_* variables
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+      - DB_NAME=businessform_db
+      # Default PostgreSQL port
+      - DB_PORT=5432
+    # Ensure the database starts before the API
+    # Without this, the API would fail to connect on startup
+    depends_on:
+      - db
+    # Connect to the shared network for inter-service communication
+    networks:
+      - business-network
+    # Health check to verify the API is responding
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Database service: Runs PostgreSQL with custom initialization
+  # This corresponds to the root directory and db.Dockerfile
+  db:
+    # Build the image from the root directory using db.Dockerfile
+    # This creates a PostgreSQL container with Node.js for running init scripts
+    build:
+      context: .
+      dockerfile: db.Dockerfile
+    # Map host port 5432 to container port 5432
+    # Allows external database connections (e.g., from pgAdmin)
+    ports:
+      - "5432:5432"
+    # Environment variables for PostgreSQL setup and custom scripts
+    environment:
+      # POSTGRES_* variables are used by the PostgreSQL Docker image
+      # and the entrypoint.sh script for initial database setup
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=businessform_db
+      # DB_* variables are used by the Node.js scripts in scripts/ directory
+      # These scripts (init-db.js, seed-db.js, db-utils.js) run inside the container
+      # to set up the database schema and populate sample data
+      - DB_HOST=localhost # Scripts connect to localhost within the db container
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+      - DB_NAME=businessform_db
+      - DB_PORT=5432
+    # Connect to the shared network so the API can reach it
+    networks:
+      - business-network
+    # Health check to ensure PostgreSQL is ready to accept connections
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U myuser -d businessform_db" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    # Persist database data between container restarts
+    # Maps host directory ./data to container's PostgreSQL data directory
+    # This ensures your database data survives container rebuilds
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+# Define the custom network for service communication
+# This allows services to communicate using service names as hostnames
+networks:
+  # Create a bridge network named 'business-network'
+  # All services connect to this network for secure inter-service communication
+  business-network:
+    driver: bridge
+
+# Optional: Define volumes for data persistence
+# The db service uses a named volume to persist PostgreSQL data
+volumes:
+  # This volume ensures database data survives container restarts/rebuilds
+  postgres_data:

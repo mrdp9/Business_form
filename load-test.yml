@@ -1,0 +1,24 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 30  # seconds
+      arrivalRate: 5  # requests per second
+    - duration: 30
+      arrivalRate: 10
+    - duration: 30
+      arrivalRate: 20
+
+scenarios:
+  - name: Submit business form
+    flow:
+      - post:
+          url: '/api/submit'
+          json:
+            firstName: 'TestUser{{$randomInt}}'
+            lastName: 'LoadTest{{$randomInt}}'
+            email: 'test{{$randomInt}}@example.com'
+            phone: '123456789{{$randomInt}}'
+            address: '123 Test Street {{$randomInt}}'
+            postalCode: '1234{{$randomInt}}'
+            businessIdea: 'Load testing business idea with sufficient length {{$randomInt}}'
+            requirements: 'This is a load test submission with detailed requirements to meet validation criteria and ensure it is long enough for the test. {{$randomInt}}'
