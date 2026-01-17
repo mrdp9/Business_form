@@ -45,7 +45,7 @@ services:
       - POSTGRES_USER=myuser
       - POSTGRES_PASSWORD=mypassword
       - POSTGRES_DB=businessform_db
-      - DB_HOST=localhost # Scripts connect to localhost within the db container
+      - DB_HOST=localhost 
       - DB_USER=myuser
       - DB_PASSWORD=mypassword
       - DB_NAME=businessform_db

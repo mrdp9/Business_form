@@ -1,0 +1,135 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: business-app
+  labels:
+    app: business-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: business-app
+  template:
+    metadata:
+      labels:
+        app: business-app
+    spec:
+      containers:
+      - name: website
+        image: website:latest
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          exec:
+            command: ["nginx", "-t"]
+          initialDelaySeconds: 30
+          periodSeconds: 30
+
+      - name: api
+        image: api:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DB_HOST
+          value: "db"
+        - name: DB_USER
+          value: "myuser"
+        - name: DB_PASSWORD
+          value: "mypassword"
+        - name: DB_NAME
+          value: "businessform_db"
+        - name: DB_PORT
+          value: "5432"
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+
+      - name: db
+        image: db:latest
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: "myuser"
+        - name: POSTGRES_PASSWORD
+          value: "mypassword"
+        - name: POSTGRES_DB
+          value: "businessform_db"
+        - name: DB_HOST
+          value: "localhost"
+        - name: DB_USER
+          value: "myuser"
+        - name: DB_PASSWORD
+          value: "mypassword"
+        - name: DB_NAME
+          value: "businessform_db"
+        - name: DB_PORT
+          value: "5432"
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+        readinessProbe:
+          exec:
+            command: ["pg_isready", "-U", "myuser", "-d", "businessform_db"]
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          exec:
+            command: ["pg_isready", "-U", "myuser", "-d", "businessform_db"]
+          initialDelaySeconds: 30
+          periodSeconds: 30
+
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: business-app-service
+spec:
+  selector:
+    app: business-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      name: website
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+      name: api
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+      name: db
+  type: LoadBalancer
