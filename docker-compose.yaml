@@ -29,11 +29,13 @@ services:
       - db
     networks:
       - business-network
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
 
   db:
     build:
@@ -45,7 +47,7 @@ services:
       - POSTGRES_USER=myuser
       - POSTGRES_PASSWORD=mypassword
       - POSTGRES_DB=businessform_db
-      - DB_HOST=localhost 
+      - DB_HOST=localhost
       - DB_USER=myuser
       - DB_PASSWORD=mypassword
       - DB_NAME=businessform_db
@@ -54,11 +56,13 @@ services:
       - business-network
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U myuser -d businessform_db" ]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
 
 networks:
   business-network:

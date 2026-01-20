@@ -50,3 +50,5 @@ EXPOSE 5432
 # Set the default command.
 # Our entrypoint.sh script will pass this command to the original postgres entrypoint.
 CMD ["postgres"]
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD pg_isready -U postgres || exit 1

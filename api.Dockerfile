@@ -31,3 +31,5 @@ EXPOSE 3000
 # Define the command to run your app.
 # This is what will be executed when the container starts.
 CMD [ "node", "server.js" ]
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/ || exit 1
